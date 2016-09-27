@@ -40,57 +40,57 @@ def validate_options(opts)
         puts "Using #{opts.chapter} as chapter name" if opts.verbose
     end
 
-	return true, nil
+    return true, nil
 end
 
 # Parse the input file and split it using the HR tags
 def read_input(opts, separator = :hr)
-	text = File.read(opts.input)
-	puts "Reading #{opts.input} as input" if opts.verbose
-	source = Kramdown::Document.new(text)
+    text = File.read(opts.input)
+    puts "Reading #{opts.input} as input" if opts.verbose
+    source = Kramdown::Document.new(text)
 
-	pages = []
-	current_page = Kramdown::Document.new('')
-	puts "Parsing #{opts.input}" if opts.verbose
-	source.root.children.each do |element|
-		if element.type == separator
-			pages << current_page
-			current_page = Kramdown::Document.new('')
-		else
-			current_page.root.children << element
-		end
-	end
+    pages = []
+    current_page = Kramdown::Document.new('')
+    puts "Parsing #{opts.input}" if opts.verbose
+    source.root.children.each do |element|
+        if element.type == separator
+            pages << current_page
+            current_page = Kramdown::Document.new('')
+        else
+            current_page.root.children << element
+        end
+    end
 
-	pages << current_page
-	puts "Found #{pages.count} slides on #{opts.input}" if opts.verbose
-	pages
+    pages << current_page
+    puts "Found #{pages.count} slides on #{opts.input}" if opts.verbose
+    pages
 end
 
 # Create the basic folder structure
 def create_structure(opts)
-	puts "Creating folder structure" if opts.verbose
-	FileUtils.mkdir("#{opts.output}")
-	FileUtils.mkdir("#{opts.output}/Contents")
-	FileUtils.mkdir("#{opts.output}/Contents/Chapters")
-	FileUtils.mkdir("#{opts.output}/Contents/Resources")
-	FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}")
-	FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}/Pages")
-	FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}/Sources")
+    puts "Creating folder structure" if opts.verbose
+    FileUtils.mkdir("#{opts.output}")
+    FileUtils.mkdir("#{opts.output}/Contents")
+    FileUtils.mkdir("#{opts.output}/Contents/Chapters")
+    FileUtils.mkdir("#{opts.output}/Contents/Resources")
+    FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}")
+    FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}/Pages")
+    FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}/Sources")
 end
 
 # Create the main manifest files
 def create_book_manifest(opts)
     identifier = "com.akosma.#{opts.output}"
-	book_manifest = {
-		'Version' => '1.0',
-		'ContentIdentifier' => identifier,
-		'ContentVersion' => '1',
-		'DeploymentTarget' => 'ios10.0',
+    book_manifest = {
+        'Version' => '1.0',
+        'ContentIdentifier' => identifier,
+        'ContentVersion' => '1',
+        'DeploymentTarget' => 'ios10.0',
         'Name' => opts.output,
-		'ImageReference' => 'icon.png',
-		'Chapters' => [ opts.chapter ]
-	}
-	book_manifest
+        'ImageReference' => 'icon.png',
+        'Chapters' => [ opts.chapter ]
+    }
+    book_manifest
 end
 
 def save_book_manifest(opts, book_manifest)
@@ -101,11 +101,11 @@ end
 
 # Create the chapter manifest
 def create_chapter_manifest(opts)
-	chapter_manifest = {
-		'Name' => 'Chapter',
-		'Pages' => []
-	}
-	chapter_manifest
+    chapter_manifest = {
+        'Name' => 'Chapter',
+        'Pages' => []
+    }
+    chapter_manifest
 end
 
 # Create a slide manifest

@@ -30,7 +30,7 @@ class TestAdd < Test::Unit::TestCase
     def test_input_option_cannot_be_nil
         opts = OpenStruct.new
         valid, error_message = validate_options(opts)
-    	assert !valid
+        assert !valid
         assert_not_nil error_message
     end
 
