@@ -11,6 +11,9 @@ generates a book with a single chapter, separating the pages with
 horizontal rulers (that is, the `---` marker in Markdown, which
 translates as a `<HR>` tag in HTML.)
 
+It parses the first `<H1>` elements and uses its value as the title of
+the chapter.
+
 You can test the output of this tool by dropping the file
 `Sample.playgroundbook` in the iCloud/Playgrounds folder of the Finder.
 
