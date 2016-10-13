@@ -50,14 +50,19 @@ def read_input(opts, separator = :hr)
     source = Kramdown::Document.new(text)
 
     pages = []
-    current_page = Kramdown::Document.new('')
+    current_page = { :doc => Kramdown::Document.new(''), :title => "" }
     puts "Parsing #{opts.input}" if opts.verbose
     source.root.children.each do |element|
         if element.type == separator
             pages << current_page
-            current_page = Kramdown::Document.new('')
+            current_page = { :doc => Kramdown::Document.new(''), :title => "" }
+        elsif element.type == :header && element.options[:level] == 1 && current_page[:title] == ""
+            # We grab the first <H1> element in the page and set it as the title
+            # of the current page.
+            current_page[:doc].root.children << element
+            current_page[:title] = element.options[:raw_text]
         else
-            current_page.root.children << element
+            current_page[:doc].root.children << element
         end
     end
 
@@ -73,6 +78,7 @@ def create_structure(opts)
     FileUtils.mkdir("#{opts.output}/Contents")
     FileUtils.mkdir("#{opts.output}/Contents/Chapters")
     FileUtils.mkdir("#{opts.output}/Contents/Resources")
+    FileUtils.mkdir("#{opts.output}/Contents/Sources")
     FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}")
     FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}/Pages")
     FileUtils.mkdir("#{opts.output}/Contents/Chapters/#{opts.chapter}/Sources")
@@ -121,6 +127,9 @@ end
 def create_slides(opts, pages, chapter_manifest)
     pages.each_with_index do |page, index|
         title = "Page #{index}"
+        if page[:title] != ""
+            title = page[:title]
+        end
 
         page_path = "#{opts.output}/Contents/Chapters/#{opts.chapter}/Pages/#{title}.playgroundpage"
         FileUtils.mkdir(page_path)
@@ -128,9 +137,31 @@ def create_slides(opts, pages, chapter_manifest)
         slide_manifest = create_slide_manifest(opts, title)
         File.write("#{page_path}/Manifest.plist", slide_manifest.to_plist)
 
-        # This is the command that makes the magic:
-        # wrap the markdown code inside a special Swift comment prefixed with a colon
-        File.write("#{page_path}/Contents.swift", "/*:\n#{page.to_kramdown}\n*/")
+        File.open("#{page_path}/Contents.swift", 'w') do |file|
+            # Here we break down the contents of the page by separating
+            # codeblocks from other kind of objects. We basically create a
+            # placeholder object where we flush all non-codeblock objects, and
+            # we periodically flush that in the file, in Markdown format.
+            # Codeblocks are flushed verbatim into the file.
+            current = nil
+            page[:doc].root.children.each do |element|
+                if element.type == :codeblock
+                    # Flush the current object
+                    if current != nil
+                        file.write("/*:\n#{current.to_kramdown}\n*/")
+                        current = nil
+                    end
+                    # Write the contents of the codeblock literally
+                    file.write("\n\n#{element.value}\n")
+                else
+                    current = Kramdown::Document.new('') if current == nil
+                    current.root.children << element
+                end
+            end
+            if current != nil
+                file.write("/*:\n#{current.to_kramdown}\n*/")
+            end
+        end
 
         # Add the new slide to the chapter manifest
         chapter_manifest['Pages'] << "#{title}.playgroundpage"
